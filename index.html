@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Action Pad · 极简行动智体</title>
+  
+  <!-- Apple iOS PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ActionPad">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0C0D10">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            surface: '#0C0D10',
+            container: '#16181D',
+            containerHigh: '#1E2128',
+            hairline: '#262A33',
+            textPrimary: '#F3F4F6',
+            textSecondary: '#888E9B',
+            textTertiary: '#525763',
+            accent: '#ECEFF1',
+            accentRed: '#E06C75'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0C0D10;
+      color: #F3F4F6;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      padding-top: max(16px, env(safe-area-inset-top));
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+    }
+    textarea:focus, input:focus {
+      outline: none;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-white/20">
+
+  <!-- 顶部状态栏 -->
+  <header class="flex items-center justify-between py-2 border-b border-hairline/60">
+    <div class="flex items-center space-x-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400/80 animate-pulse"></span>
+      <h1 class="text-xs font-semibold tracking-widest uppercase text-textSecondary">ACTION PAD · 个人行动智体</h1>
+    </div>
+    <button onclick="toggleSettings(true)" class="p-2 -mr-2 text-textSecondary hover:text-textPrimary transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- 主体区域 -->
+  <main class="flex-1 flex flex-col space-y-4 py-4">
+
+    <!-- 输入卡片 -->
+    <div class="relative bg-container rounded-2xl border border-hairline p-4 transition-all focus-within:border-white/30">
+      <div class="flex items-center justify-between pb-2 border-b border-hairline/40 text-xs text-textSecondary">
+        <span id="charCount">0 字符</span>
+        <div class="flex items-center space-x-2">
+          <button onclick="readClipboard()" class="px-2.5 py-1 rounded-full bg-containerHigh border border-hairline text-textPrimary hover:bg-white/10 active:scale-95 transition flex items-center space-x-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <span>粘贴剪贴板</span>
+          </button>
+          <button onclick="clearInput()" class="px-2 py-1 text-textTertiary hover:text-textSecondary">清空</button>
+        </div>
+      </div>
+      <textarea id="inputText" rows="4" placeholder="粘贴或输入需要执行的文本、消息、文章或代码..." class="w-full bg-transparent resize-none pt-3 text-sm text-textPrimary placeholder-textTertiary leading-relaxed focus:outline-none"></textarea>
+    </div>
+
+    <!-- 极简行动原子网格 (Action Chips) -->
+    <div class="space-y-2">
+      <div class="text-[11px] font-medium tracking-wider uppercase text-textTertiary px-1">执行意图动作 (单点即跑)</div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <button onclick="runAction('desalinate')" class="p-3 bg-container hover:bg-containerHigh border border-hairline active:scale-[0.98] transition rounded-xl text-left flex items-start space-x-2.5">
+          <span class="text-base">⚡</span>
+          <div>
+            <div class="text-sm font-medium text-textPrimary">70% 暴力脱水</div>
+            <div class="text-xs text-textSecondary mt-0.5">滤除铺垫，提取核心骨架与要点</div>
+          </div>
+        </button>
+
+        <button onclick="runAction('refuse')" class="p-3 bg-container hover:bg-containerHigh border border-hairline active:scale-[0.98] transition rounded-xl text-left flex items-start space-x-2.5">
+          <span class="text-base">🤝</span>
+          <div>
+            <div class="text-sm font-medium text-textPrimary">委婉坚决拒绝</div>
+            <div class="text-xs text-textSecondary mt-0.5">体面客气，不留余地，微信直发</div>
+          </div>
+        </button>
+
+        <button onclick="runAction('refute')" class="p-3 bg-container hover:bg-containerHigh border border-hairline active:scale-[0.98] transition rounded-xl text-left flex items-start space-x-2.5">
+          <span class="text-base">🧠</span>
+          <div>
+            <div class="text-sm font-medium text-textPrimary">逻辑漏洞审视</div>
+            <div class="text-xs text-textSecondary mt-0.5">找出3个致命假设盲区与反驳点</div>
+          </div>
+        </button>
+
+        <button onclick="runAction('table')" class="p-3 bg-container hover:bg-containerHigh border border-hairline active:scale-[0.98] transition rounded-xl text-left flex items-start space-x-2.5">
+          <span class="text-base">📊</span>
+          <div>
+            <div class="text-sm font-medium text-textPrimary">提取结构表格</div>
+            <div class="text-xs text-textSecondary mt-0.5">混乱数据秒变严谨 Markdown</div>
+          </div>
+        </button>
+
+        <button onclick="runAction('translate')" class="p-3 bg-container hover:bg-containerHigh border border-hairline active:scale-[0.98] transition rounded-xl text-left flex items-start space-x-2.5">
+          <span class="text-base">🌐</span>
+          <div>
+            <div class="text-sm font-medium text-textPrimary">信达雅专业精翻</div>
+            <div class="text-xs text-textSecondary mt-0.5">术语精准，符合母语语境对照</div>
+          </div>
+        </button>
+
+        <button onclick="runAction('execute')" class="p-3 bg-container hover:bg-containerHigh border border-hairline active:scale-[0.98] transition rounded-xl text-left flex items-start space-x-2.5">
+          <span class="text-base">🛠️</span>
+          <div>
+            <div class="text-sm font-medium text-textPrimary">拆解行动清单</div>
+            <div class="text-xs text-textSecondary mt-0.5">大目标拆分为可立即执行微步骤</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- 结果输出卡片 -->
+    <div id="outputCard" class="hidden flex-1 flex flex-col bg-container border border-hairline rounded-2xl p-4 transition-all">
+      <div class="flex items-center justify-between pb-3 border-b border-hairline text-xs">
+        <div class="flex items-center space-x-2">
+          <span id="outputStatusIndicator" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="outputActionName" class="font-medium text-textPrimary">执行结果</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="copyOutput(true)" class="px-2.5 py-1 rounded-full bg-white text-black font-medium text-xs hover:bg-neutral-200 active:scale-95 transition">
+            复制并清空
+          </button>
+          <button onclick="copyOutput(false)" class="px-2 py-1 text-textSecondary hover:text-textPrimary text-xs">
+            仅复制
+          </button>
+        </div>
+      </div>
+      <div id="outputText" class="flex-1 pt-3 text-sm text-textPrimary whitespace-pre-wrap leading-relaxed select-text overflow-y-auto max-h-[360px] custom-scroll"></div>
+    </div>
+
+  </main>
+
+  <!-- 设置滑出抽屉 (Key配置) -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end justify-center">
+    <div class="w-full max-w-lg bg-container border-t border-hairline rounded-t-3xl p-6 space-y-4 pb-8">
+      <div class="flex items-center justify-between pb-2 border-b border-hairline">
+        <h2 class="text-base font-semibold text-textPrimary">API KEY 配置 (纯本地存储)</h2>
+        <button onclick="toggleSettings(false)" class="text-textSecondary hover:text-textPrimary p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-textSecondary mb-1">服务厂商 / 模型通道</label>
+          <select id="providerSelect" onchange="onProviderChange()" class="w-full bg-containerHigh border border-hairline rounded-xl px-3 py-2.5 text-textPrimary focus:border-white/40">
+            <option value="deepseek">DeepSeek (官方 API)</option>
+            <option value="gemini">Google Gemini (OpenAI 兼容接口)</option>
+            <option value="siliconflow">SiliconFlow 硅基流动 (免费 Qwen/DeepSeek)</option>
+            <option value="custom">自定义 OpenAI 兼容接口</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-textSecondary mb-1">接口地址 (Endpoint)</label>
+          <input type="text" id="apiEndpoint" class="w-full bg-containerHigh border border-hairline rounded-xl px-3 py-2.5 text-textPrimary focus:border-white/40 font-mono" value="https://api.deepseek.com/chat/completions">
+        </div>
+
+        <div>
+          <label class="block text-textSecondary mb-1">模型名称 (Model)</label>
+          <input type="text" id="apiModel" class="w-full bg-containerHigh border border-hairline rounded-xl px-3 py-2.5 text-textPrimary focus:border-white/40 font-mono" value="deepseek-chat">
+        </div>
+
+        <div>
+          <label class="block text-textSecondary mb-1">API Key</label>
+          <input type="password" id="apiKey" placeholder="sk-..." class="w-full bg-containerHigh border border-hairline rounded-xl px-3 py-2.5 text-textPrimary focus:border-white/40 font-mono">
+          <p class="text-[11px] text-textTertiary mt-1">Key 仅保存在 iPhone 的 LocalStorage，绝不上载任何第三方服务器。</p>
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="saveSettings()" class="w-full py-3 rounded-xl bg-white text-black font-semibold text-sm active:scale-95 transition">
+          保存并启用
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PROMPTS = {
+      desalinate: "请对以下输入内容执行【暴力脱水】：彻底滤除一切废话、背景铺垫、客套修辞与车轱辘话。仅输出：1. 一句话事实结论；2. 3-5条按重要性排列的核心事实骨架。语言极度精炼客观。",
+      refuse: "请针对以下请求或消息，撰写一段【委婉但不可动摇的拒绝回复】。要求：态度礼貌真诚、表达感激，但逻辑严密不留任何回旋空间或期待，无需编造虚假借口，直接适合微信/即时通讯工具复制发送。",
+      refute: "请对以下内容进行【深度批判性审视与逻辑反驳】：找出该论述中最致命的 3 个潜在假设漏洞、事实缺陷或逻辑谬误，并以冷峻精炼的语言逐条指出。",
+      table: "请分析以下文本中的数据与事实，将其提取并整理成一份排版优雅、结构清晰的 Markdown 表格，并根据逻辑自动补全关键列对比。",
+      translate: "请将以下内容进行【专业级信达雅翻译】。若为英文则译为地道中文，若为中文则译为母语级英语。保留专业术语，消除翻译腔，附带重点词汇说明。",
+      execute: "请将以下内容或目标，拆解为一份【高可行性微行动清单】。按阶段输出：第一步（今日5分钟可做）、第二步（本周执行）、第三步（验收标准）。禁止假大空。"
+    };
+
+    const PROVIDERS = {
+      deepseek: {
+        endpoint: "https://api.deepseek.com/chat/completions",
+        model: "deepseek-chat"
+      },
+      gemini: {
+        endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+        model: "gemini-2.0-flash"
+      },
+      siliconflow: {
+        endpoint: "https://api.siliconflow.cn/v1/chat/completions",
+        model: "deepseek-ai/DeepSeek-V3"
+      }
+    };
+
+    // 初始化加载配置
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSettings();
+      const input = document.getElementById('inputText');
+      input.addEventListener('input', () => {
+        document.getElementById('charCount').innerText = `${input.value.length} 字符`;
+      });
+    });
+
+    function onProviderChange() {
+      const p = document.getElementById('providerSelect').value;
+      if (PROVIDERS[p]) {
+        document.getElementById('apiEndpoint').value = PROVIDERS[p].endpoint;
+        document.getElementById('apiModel').value = PROVIDERS[p].model;
+      }
+    }
+
+    function toggleSettings(show) {
+      const modal = document.getElementById('settingsModal');
+      if (show) modal.classList.remove('hidden');
+      else modal.classList.add('hidden');
+    }
+
+    function saveSettings() {
+      const config = {
+        provider: document.getElementById('providerSelect').value,
+        endpoint: document.getElementById('apiEndpoint').value.trim(),
+        model: document.getElementById('apiModel').value.trim(),
+        key: document.getElementById('apiKey').value.trim()
+      };
+      localStorage.setItem('action_pad_config', JSON.stringify(config));
+      toggleSettings(false);
+      showToast("设置已保存");
+    }
+
+    function loadSettings() {
+      const saved = localStorage.getItem('action_pad_config');
+      if (saved) {
+        try {
+          const config = JSON.parse(saved);
+          document.getElementById('providerSelect').value = config.provider || 'deepseek';
+          document.getElementById('apiEndpoint').value = config.endpoint || PROVIDERS.deepseek.endpoint;
+          document.getElementById('apiModel').value = config.model || PROVIDERS.deepseek.model;
+          document.getElementById('apiKey').value = config.key || '';
+        } catch (_) {}
+      }
+    }
+
+    async function readClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          document.getElementById('inputText').value = text;
+          document.getElementById('charCount').innerText = `${text.length} 字符`;
+          showToast("已粘贴剪贴板内容");
+        }
+      } catch (err) {
+        showToast("无法直接读取剪贴板，请长按手动粘贴");
+      }
+    }
+
+    function clearInput() {
+      document.getElementById('inputText').value = '';
+      document.getElementById('charCount').innerText = '0 字符';
+    }
+
+    async function runAction(actionType) {
+      const input = document.getElementById('inputText').value.trim();
+      if (!input) {
+        showToast("请先输入或粘贴内容");
+        return;
+      }
+
+      const configStr = localStorage.getItem('action_pad_config');
+      if (!configStr) {
+        toggleSettings(true);
+        showToast("请先配置您的 API Key");
+        return;
+      }
+
+      const config = JSON.parse(configStr);
+      if (!config.key) {
+        toggleSettings(true);
+        showToast("请填写 API Key 后继续");
+        return;
+      }
+
+      const prompt = PROMPTS[actionType];
+      const outputCard = document.getElementById('outputCard');
+      const outputText = document.getElementById('outputText');
+      const statusDot = document.getElementById('outputStatusIndicator');
+      
+      outputCard.classList.remove('hidden');
+      outputText.innerText = "";
+      statusDot.className = "w-2 h-2 rounded-full bg-amber-400 animate-ping";
+      document.getElementById('outputActionName').innerText = "智能体流式执行中...";
+
+      try {
+        const response = await fetch(config.endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${config.key}`
+          },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [
+              { role: "system", content: prompt },
+              { role: "user", content: input }
+            ],
+            stream: true
+          })
+        });
+
+        if (!response.ok) {
+          const err = await response.text();
+          throw new Error(`HTTP ${response.status}: ${err}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("data: ")) {
+              const dataStr = trimmed.slice(6);
+              if (dataStr === "[DONE]") continue;
+              try {
+                const parsed = JSON.parse(dataStr);
+                const delta = parsed.choices?.[0]?.delta?.content || "";
+                fullText += delta;
+                outputText.innerText = fullText;
+              } catch (_) {}
+            }
+          }
+        }
+
+        statusDot.className = "w-2 h-2 rounded-full bg-emerald-400";
+        document.getElementById('outputActionName').innerText = "已完成";
+        showToast("执行完成");
+
+      } catch (e) {
+        statusDot.className = "w-2 h-2 rounded-full bg-accentRed";
+        document.getElementById('outputActionName').innerText = "请求错误";
+        outputText.innerText = `错误详情: ${e.message}\n请检查网络或在右上角设置中校验 API Key 与 Endpoint。`;
+      }
+    }
+
+    function copyOutput(clearAfter) {
+      const text = document.getElementById('outputText').innerText;
+      if (!text) return;
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(clearAfter ? "已复制并清空" : "已复制到剪贴板");
+        if (clearAfter) {
+          clearInput();
+          document.getElementById('outputCard').classList.add('hidden');
+        }
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.className = "fixed top-8 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-white/90 text-black text-xs font-semibold shadow-2xl z-50 transition-all pointer-events-none";
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 1800);
+    }
+  </script>
+</body>
+</html>

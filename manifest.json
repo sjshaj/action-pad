@@ -1,0 +1,16 @@
+{
+  "name": "Action Pad",
+  "short_name": "ActionPad",
+  "description": "极简无废话行动智能体",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0C0D10",
+  "theme_color": "#0C0D10",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
